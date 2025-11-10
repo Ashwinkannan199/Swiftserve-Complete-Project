@@ -1,0 +1,192 @@
+/* static/css/style.css */
+
+/* === 1. Root & Variables === */
+:root {
+    --primary-color: #00BFA5;  /* A vibrant, modern teal */
+    --primary-dark: #008f7a;
+    --text-dark: #212529;
+    --text-light: #6c757d;
+    --bg-light: #f8f9fa;
+    --border-color: #dee2e6;
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --border-radius-md: 0.5rem; /* 8px */
+    --border-radius-lg: 0.75rem; /* 12px */
+}
+
+/* === 2. Global Styles === */
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+}
+
+/* === 3. Component Styling === */
+
+/* --- Navbar --- */
+.navbar-brand-custom {
+    color: var(--primary-color) !important;
+    font-weight: 700;
+    font-size: 1.75rem;
+}
+
+.navbar-light .nav-link {
+    color: var(--text-light) !important;
+    font-weight: 500;
+    transition: color 0.2s ease-in-out;
+}
+
+.navbar-light .nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Style the "Register" button in navbar */
+.navbar .btn-primary {
+    padding: 0.25rem 1rem;
+    border-radius: 20px; /* Pill shape */
+    color: #fff;
+    font-weight: 500;
+}
+
+/* --- Buttons --- */
+.btn {
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-warning, .btn-danger, .btn-secondary {
+    transform: translateY(0);
+}
+.btn-warning:hover, .btn-danger:hover, .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* --- Forms & Auth Card --- */
+/* This is a new class you will add to your HTML */
+.auth-form-container {
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    max-width: 500px;
+    margin: 2rem auto;
+}
+
+.form-control, .form-select {
+    border-radius: var(--border-radius-md);
+    padding: 0.75rem 1rem;
+    border-color: var(--border-color);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(0, 191, 165, 0.25);
+}
+
+/* --- Restaurant List (home.html) --- */
+.list-group-item-action {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.list-group-item-action:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary-color);
+    z-index: 10;
+}
+
+.list-group-item-action h5 {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* --- Menu Item Cards (restaurant_menu.html) --- */
+.card {
+    border: none;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-title {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+.card-subtitle {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* --- Dashboard (manage_menu.html) --- */
+.dashboard-card {
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.table thead {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+.table {
+    border-radius: var(--border-radius-md);
+    overflow: hidden; /* This makes the radius apply to table corners */
+}
+
+/* --- Flash Messages --- */
+.alert {
+    border-radius: var(--border-radius-md);
+}
+
+.alert-success {
+    background-color: #e6f7f3;
+    border-color: #b3e0d6;
+    color: #005f4e;
+}
+
+.alert-danger {
+    background-color: #fde8e8;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert-info {
+    background-color: #e6f7ff;
+    border-color: #b3e0ff;
+    color: #005f9e;
+}
+
+.alert-warning {
+    background-color: #fff8e6;
+    border-color: #ffe5b3;
+    color: #665400;
+}

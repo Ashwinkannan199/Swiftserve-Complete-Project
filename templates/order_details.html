@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-card">
+    <div class="row">
+        <div class="col-md-8">
+            <h2 class="mb-3">Order #{{ order.id }}</h2>
+            <h4 class="mb-4">Status: <span class="text-primary">{{ order.status }}</span></h4>
+            <!-- Added for module 3-->
+             <p id="agent-info" class="text-muted">
+                {% if order.agent %}
+                    Delivery by: {{ order.agent.email.split('@')[0] }}
+                {% endif %}
+            </p>
+        </div>
+        
+        <h5>Order Summary</h5>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items %}
+                <tr>
+                    <td>{{ item.menu_item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ "%.2f"|format(item.price_per_item) }}</td>
+                    <td>${{ "%.2f"|format(item.price_per_item * item.quantity) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h4 class="text-end">Grand Total: ${{ "%.2f"|format(order.total_price) }}</h4>
+        </div>
+        <div class="col-md-4">
+            <!--added for module 4-->
+            <h5>Live Tracking</h5>
+            <div id="map" style="height: 300px; border-radius: 0.5rem; margin-top: 1rem; background: #eee;">
+                {% if order.status != 'Picked Up' and order.status != 'Delivered' %}
+                <div class="d-flex justify-content-center align-items-center h-100 text-muted">
+                    Map will appear here when order is picked up.
+                </div>
+                {% endif %}
+            </div>
+            <hr>
+            <h5>Delivery Details</h5>
+            <p>
+                <strong>Name:</strong> {{ order.customer_name }}<br>
+                <strong>Address:</strong> {{ order.customer_address }}<br>
+                <strong>Phone:</strong> {{ order.customer_phone }}
+            </p>
+            <hr>
+            <h5>Restaurant</h5>
+            <p>
+                <strong>{{ order.restaurant.name }}</strong><br>
+                {{ order.restaurant.address }}
+            </p>
+        </div>
+    </div>
+    
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // 2. Connect to the server
+            var socket = io();
+
+            // 3. Join the specific room for this order
+            socket.on('connect', () => {
+                socket.emit('join_order_room', { order_id: '{{ order.id }}' });
+            });
+
+            // 4. Handle a status update event from the server
+            socket.on('status_update', (data) => {
+                console.log('Status update received:', data);
+                
+                // Find the status element and update its text
+                const statusEl = document.getElementById('order-status');
+                if (statusEl) {
+                    statusEl.innerText = data.status;
+                }
+                
+                // If the update includes agent info, display it
+                if (data.agent_name) {
+                    const agentEl = document.getElementById('agent-info');
+                    if (agentEl) {
+                        agentEl.innerText = `Delivery by: ${data.agent_name}`;
+                    }
+                }
+
+                // In Module 4, we would start tracking if status is "Picked Up"
+            });
+        });
+    </script>
+    <!-- added for module 4-->
+    <script>
+        // Global vars for map and markers
+        let map = null;
+        let agentMarker = null;
+
+        // Customer's location (from the Order object)
+        const customerLat = {{ order.customer_latitude or 'null' }};
+        const customerLng = {{ order.customer_longitude or 'null' }};
+
+        // Function to initialize the map
+        function initMap() {
+            if (map || !customerLat) return; // Don't re-initialize
+            
+            document.getElementById('map').innerHTML = ""; // Clear "waiting" message
+
+            map = L.map('map').setView([customerLat, customerLng], 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Marker for customer (home)
+            L.marker([customerLat, customerLng]).addTo(map)
+                .bindPopup('Your Location')
+                .openPopup();
+        }
+
+        // Function to create or update the agent's marker
+        function updateAgentMarker(lat, lng) {
+            if (!map) initMap(); // Initialize map if not already
+            if (!map) return; // Still no map (missing customer_lat/lng)
+
+            if (!agentMarker) {
+                // Create the agent marker
+                agentMarker = L.marker([lat, lng], {
+                    // You can use a custom icon here
+                }).addTo(map);
+            } else {
+                // Move the existing agent marker
+                agentMarker.setLatLng([lat, lng]);
+            }
+            
+            agentMarker.bindPopup('Your delivery is here!').openPopup();
+            map.panTo([lat, lng]); // Center map on the agent
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // If order is already "Picked Up" on page load, init map
+            if ("{{ order.status }}" === "Picked Up" && customerLat) {
+                initMap();
+            }
+
+            var socket = io();
+            socket.on('connect', () => {
+                socket.emit('join_order_room', { order_id: '{{ order.id }}' });
+            });
+
+            // Listen for regular status updates
+            socket.on('status_update', (data) => {
+                const statusEl = document.getElementById('order-status');
+                if (statusEl) statusEl.innerText = data.status;
+
+                if (data.agent_name) {
+                    const agentEl = document.getElementById('agent-info');
+                    if (agentEl) agentEl.innerText = `Delivery by: ${data.agent_name}`;
+                }
+
+                // If status changes to 'Picked Up', init the map
+                if (data.status === "Picked Up" && customerLat) {
+                    initMap();
+                }
+            });
+
+            // LISTEN FOR LIVE LOCATION FROM AGENT
+            socket.on('customer_location_update', (location) => {
+                console.log('Agent location received:', location);
+                updateAgentMarker(location.lat, location.lng);
+            });
+        });
+    </script>
+
+{% endblock %}

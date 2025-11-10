@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Welcome to SwiftServe!</h1>
+    <p>Order from your favorite local restaurants.</p>
+    
+    <h2>Available Restaurants</h2>
+
+    <!-- Restaurant list is removed from HTML and will be built by JavaScript-->
+
+    <div id="restaurant-list" class="list-group">
+        <p id="loading-message">Getting your location to find nearby restaurants...</p>
+    </div>
+    
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const restaurantList = document.getElementById('restaurant-list');
+        const loadingMessage = document.getElementById('loading-message');
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(fetchNearbyRestaurants, handleLocationError);
+        } else {
+            loadingMessage.innerText = "Geolocation is not supported by your browser.";
+        }
+
+        function fetchNearbyRestaurants(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            // Make an API call to our new Flask route
+            fetch(`/api/nearby-restaurants?lat=${lat}&lon=${lon}`)
+                .then(response => response.json())
+                .then(restaurants => {
+                    loadingMessage.style.display = 'none'; // Hide loading message
+                    
+                    if (restaurants.length === 0) {
+                        restaurantList.innerHTML = '<p>No restaurants found within 10km of your location.</p>';
+                        return;
+                    }
+
+                    // Build the restaurant list dynamically
+                    restaurants.forEach(restaurant => {
+                        const restaurantHTML = `
+                            <a href="/restaurant/${restaurant.id}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">${restaurant.name}</h5>
+                                    <small class="text-success"><strong>${restaurant.distance} km away</strong></small>
+                                </div>
+                                <p class="mb-1">${restaurant.address}</p>
+                                <small>${restaurant.cuisine_type}</small>
+                            </a>
+                        `;
+                        restaurantList.insertAdjacentHTML('beforeend', restaurantHTML);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching restaurants:', error);
+                    loadingMessage.innerText = 'Could not load restaurants.';
+                });
+        }
+
+        function handleLocationError(error) {
+            loadingMessage.innerText = `Error: ${error.message}. Please enable location services.`;
+        }
+    });
+</script>
+{% endblock %}

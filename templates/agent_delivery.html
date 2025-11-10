@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-card">
+    <div class="row">
+        <div class="col-md-5">
+            <h2>Delivering Order #{{ order.id }}</h2>
+            <p>Your location is now being shared with the customer.</p>
+            <hr>
+            <h5>Destination:</h5>
+            <p>
+                <strong>{{ order.customer_name }}</strong><br>
+                {{ order.customer_address }}<br>
+                {{ order.customer_phone }}
+            </p>
+            <form action="{{ url_for('agent_complete_delivery', order_id=order.id) }}" method="POST">
+                <button type="submit" class="btn btn-success btn-lg mt-3 w-100">
+                    Confirm Handed Over & Delivered
+                </button>
+            </form>
+            </div>
+        <div class="col-md-7">
+            <h5>Your Route</h5>
+            <div id="agent-map" style="height: 400px; border-radius: 0.5rem; background: #eee;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const customerLat = {{ order.customer_latitude or 'null' }};
+            const customerLng = {{ order.customer_longitude or 'null' }};
+            const orderId = '{{ order.id }}';
+
+            if (!customerLat) {
+                document.getElementById('agent-map').innerHTML = "Could not load map: Customer location is missing.";
+                return;
+            }
+
+            // 1. Initialize map
+            const map = L.map('agent-map').setView([customerLat, customerLng], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            // 2. Add marker for customer's house
+            L.marker([customerLat, customerLng]).addTo(map)
+                .bindPopup('Delivery Destination')
+                .openPopup();
+                
+            let agentMarker = null;
+            
+            // 3. Connect to SocketIO
+            var socket = io();
+
+            // 4. Watch agent's position
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Update agent's own map
+                    if (!agentMarker) {
+                        agentMarker = L.marker([lat, lng]).addTo(map);
+                    } else {
+                        agentMarker.setLatLng([lat, lng]);
+                    }
+                    map.panTo([lat, lng]);
+
+                    // 5. EMIT LOCATION TO SERVER
+                    socket.emit('agent_location_update', {
+                        order_id: orderId,
+                        lat: lat,
+                        lng: lng
+                    });
+
+                }, (error) => {
+                    console.error("Geolocation error: " + error.message);
+                }, {
+                    enableHighAccuracy: true // Use GPS if available
+                });
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        });
+    </script>
+{% endblock %}

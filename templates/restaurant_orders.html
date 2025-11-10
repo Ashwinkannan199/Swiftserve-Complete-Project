@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-card">
+    <h2 class="mb-4">Incoming Orders</h2>
+    
+    {% if orders %}
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Address</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('order_details', order_id=order.id) }}"><strong>#{{ order.id }}</strong></a>
+                </td>
+                <td>{{ order.customer_name }}</td>
+                <td>{{ order.customer_address }}</td>
+                <td>${{ "%.2f"|format(order.total_price) }}</td>
+                <td>
+                    <span class="badge 
+                        {% if order.status == 'Placed' %} bg-primary
+                        {% elif order.status == 'Preparing' %} bg-info
+                        {% elif order.status == 'Ready for Pickup' %} bg-success
+                        {% elif order.status == 'Rejected' %} bg-danger
+                        {% else %} bg-secondary
+                        {% endif %}">
+                        {{ order.status }}
+                    </span>
+                </td>
+                <td>
+                    {% if order.status == 'Placed' %}
+                    <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="status" value="Preparing">
+                        <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                    </form>
+                    <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="status" value="Rejected">
+                        <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                    </form>
+                    {% elif order.status == 'Preparing' %}
+                    <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="status" value="Ready for Pickup">
+                        <button type="submit" class="btn btn-primary btn-sm">Mark as Ready</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-center p-5">
+        <h4>No orders... yet!</h4>
+        <p class="text-muted">New orders from customers will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var socket = io();
+
+            // Join the room for this restaurant
+            socket.on('connect', () => {
+                socket.emit('join_restaurant_room', { 
+                    restaurant_id: '{{ current_user.restaurant.id }}' 
+                });
+            });
+
+            // Handle a new order event
+            socket.on('new_order', (data) => {
+                console.log('New order received:', data);
+                
+                // Show a simple alert and reload the page
+                alert(`New Order (#${data.order_id}) from ${data.customer_name}! The page will now reload.`);
+                window.location.reload();
+                
+                // A more advanced solution would dynamically add the order to the table
+            });
+        });
+    </script>
+{% endblock %}
