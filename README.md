@@ -37,13 +37,13 @@ It is highly recommended to use a virtual environment to manage project dependen
 
 Bash
 
-# Create a virtual environment
+## Create a virtual environment
 python -m venv .venv
 
-# Activate the environment
-# On macOS/Linux:
+## Activate the environment
+## On macOS/Linux:
 source .venv/bin/activate
-# On Windows (PowerShell):
+## On Windows (PowerShell):
 .\.venv\Scripts\Activate.ps1
 
 ## 3. Install Dependencies
@@ -88,11 +88,11 @@ Create a file named .env in the root of your project. This file will securely st
 
 Your .env file should look like this:
 
-# Flask Secret Key (change this to a random string)
+## Flask Secret Key (change this to a random string)
 SECRET_KEY='your_very_strong_and_secret_key'
 
-# PostgreSQL Database URL
-# Format: postgresql://[USERNAME]:[PASSWORD]@[HOSTNAME]:[PORT]/[DATABASE_NAME]
+## PostgreSQL Database URL
+## Format: postgresql://[USERNAME]:[PASSWORD]@[HOSTNAME]:[PORT]/[DATABASE_NAME]
 SQLALCHEMY_DATABASE_URI='postgresql://postgres:your_password@localhost:5432/swiftserve'
 (Make sure to update your_password and other details to match your local PostgreSQL setup.)
 
